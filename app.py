@@ -3,7 +3,7 @@ import base64
 import os
 import numpy as np
 import cv2
-from detect import YoloDetect
+from services.detectors.detect import YoloDetect
 import datetime
 import json
 # Create flask app

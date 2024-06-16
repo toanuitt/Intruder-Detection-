@@ -6,6 +6,7 @@ import cv2
 from services.detectors.detect import YoloDetect
 import datetime
 import json
+
 # Create flask app
 app = Flask(__name__)
 
@@ -15,7 +16,6 @@ with open("config.json", "r") as f:
 cap = cv2.VideoCapture(config['cam_idx'])
 yo = YoloDetect(model_path=config['model_path'], poly=config['poly'], video_cap=cap, conf_thresh=config['conf_thresh'])
 
-# url_for("templates/css", filename="style.css")
 @app.route('/')
 def application():
     return render_template('index.html')
@@ -42,15 +42,12 @@ def isInside(polygon, point):
 
     return inside
 
-
 @app.route('/_set_polygon', methods=['POST'])
 def set_polygon():
     global polygon_coords
     data = request.get_json()
     polygon_coords = data['polygon']
     return jsonify(response="Polygon set successfully")
-
-
 
 @app.route('/_photo_cap', methods=['POST'])
 def photo_cap():
@@ -108,6 +105,7 @@ def photo_cap():
         response = str(e)
 
     return jsonify({'message': data})
+
 @app.route('/_send_polygon', methods=['POST'])
 def receive_polygon():
     global polygon_coords
@@ -119,5 +117,6 @@ def receive_polygon():
         response = {'error': str(e)}
     
     return jsonify(response)
+
 if __name__ == "__main__":
     app.run()

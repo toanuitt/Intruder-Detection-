@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
-import datetime
-import threading
 from ultralytics import YOLO
-from PIL import Image
 
 # find if a point is inside a polygon
 def isInside(contour, corr):

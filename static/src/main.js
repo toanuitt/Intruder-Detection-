@@ -36,7 +36,6 @@ function sendFrame() {
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     let dataURL = canvas.toDataURL('image/jpeg');
-
     $.ajax({
         type: "POST",
         url: "/_photo_cap",

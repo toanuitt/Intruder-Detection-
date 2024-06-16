@@ -6,7 +6,6 @@ dependencies:
   - pip
   - pip:
     - flask
-    - numpy
     - opencv-python
     - pybase64
     - pillow

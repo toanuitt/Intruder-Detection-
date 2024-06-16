@@ -1,0 +1,6 @@
+flask
+pybase64
+numpy
+opencv-python
+ultralytics
+PIL

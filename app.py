@@ -1,9 +1,9 @@
-from flask import Flask,render_template,request,jsonify
+from flask import Flask, render_template, request, jsonify
 import base64
 import os
 import numpy as np
 import cv2
-from detect import YoloDetect
+from services.detectors.detect import YoloDetect
 import datetime
 import json
 # Create flask app
@@ -15,7 +15,7 @@ with open("config.json", "r") as f:
 cap = cv2.VideoCapture(config['cam_idx'])
 yo = YoloDetect(model_path=config['model_path'], poly=config['poly'], video_cap=cap, conf_thresh=config['conf_thresh'])
 
-
+# url_for("templates/css", filename="style.css")
 @app.route('/')
 def application():
     return render_template('index.html')

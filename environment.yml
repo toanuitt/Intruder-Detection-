@@ -1,0 +1,13 @@
+name: yolo-flask
+channels:
+  - defaults
+dependencies:
+  - python = 3.9
+  - pip
+  - pip:
+    - flask
+    - numpy
+    - opencv-python
+    - pybase64
+    - pillow
+    - ultralytics

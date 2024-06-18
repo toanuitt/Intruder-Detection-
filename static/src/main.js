@@ -149,3 +149,10 @@ function sendPolygonPoints() {
         }
     });
 }
+$(document).ready(function() {
+    $('#userInput').keypress(function(event) {
+        if (event.key === 'Enter') {
+            $(this).val(0);
+        }
+    });
+});

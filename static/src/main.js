@@ -1,4 +1,3 @@
-
 let video = document.querySelector("#videoElement");
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
@@ -91,30 +90,36 @@ canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
     const x = e.offsetX;
     const y = e.offsetY;
-    points.push({ x, y });
+    if (points.length === 0) {
+        points.push({ x, y }); // Add the first point
+    }
+    points.push({ x, y }); // Start new line from this point
 });
 
 canvas.addEventListener('mousemove', (e) => {
     if (isDrawing) {
         const x = e.offsetX;
         const y = e.offsetY;
-        points.push({ x, y });
-        drawPolyline();
+        points[points.length - 1] = { x, y }; // Update the last point
+        drawLines();
     }
 });
 
 canvas.addEventListener('mouseup', () => {
-    isDrawing = false;
-    sendPolygonPoints(); // Send points to the backend when drawing is complete
+    if (isDrawing) {
+        isDrawing = false;
+        sendPolygonPoints(); // Send points to the backend when drawing is complete
+    }
 });
 
 canvas.addEventListener('mouseout', () => {
     isDrawing = false;
 });
 
-function drawPolyline() {
+function drawLines() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawImage(video, 0, 0, canvas.width, canvas.height); // Redraw the video frame
+
     if (points.length < 2) return;
 
     context.beginPath();
@@ -149,6 +154,7 @@ function sendPolygonPoints() {
         }
     });
 }
+
 $(document).ready(function() {
     $('#userInput').keypress(function(event) {
         if (event.key === 'Enter') {

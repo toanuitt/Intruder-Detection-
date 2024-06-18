@@ -1,43 +1,41 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
-
-# find if a point is inside a polygon
+# from services.trackers import DeepSortWrapper
 
 class YoloDetect():
-    def __init__(self, model_path, conf_thresh=0.5):
+    def __init__(self, model_path, conf_thresh=0.5, iou_tracking=0.5):
         """
         Parameters:
         model_path: path to YOLO-v8 model
         conf_thresh: confident threshold for model prediction
         """
-        self.model = YOLO(model_path) # load model
-        self.conf_threshold = conf_thresh # confidence threshold
-        self.count = 0 # count number of people inside the zone 
-        self.classes = 0 # class index of 'people' for YOLO
+        self.model = YOLO(model_path)
+        self.conf_threshold = conf_thresh
+        self.iou_tracking = iou_tracking
+        self.classes = 0
+        # self.tracker = DeepSortWrapper(max_age= 30, n_init= 3)
+
+    def load_model(self, model_path):
+        self.model = YOLO(model_path)
         
     # detect people using YOLO-v8
-    def predict(self, img):
-        return self.model.predict(img, classes=self.classes, conf=self.conf_threshold)
-    
-    # give warning with given condition
-    def warn(self, curr):
-        if curr == 0:
-            if self.count != curr:
-                print("Only person left!")
+    def predict(self, img, tracker, verbose= False):
+        if tracker == "YOLO":
+            return self.model.track(img, classes=self.classes, conf=self.conf_threshold, 
+                                    iou=self.iou_tracking, verbose= verbose, persist= True)
+        elif tracker == "DEEPSORT":
+            self.model.predict(img, classes=self.classes, conf=self.conf_threshold, verbose= verbose)
+            tracks = self.tracker.update_tracks(img, )    
         else:
-            if self.count > curr:
-                print("New person in!")
-            elif self.count < curr:
-                print("One person out!")
+            return self.model.predict(img, classes=self.classes, conf=self.conf_threshold, verbose= verbose)
+    
+    def isInside(self, contour, corr):
+        return cv2.pointPolygonTest(contour, corr, False) == 1
 
-    def isInside(contour, corr):
-        return True if cv2.pointPolygonTest(contour, corr, False) == 1 else False
-
-    # run function
-    def detect(self, img, polygon):
-        results = self.predict(img)
-        img = cv2.polylines(img, polygon, True, (0,255,0), 3)
+    def detect(self, img, polygon, isTrack):
+        results = self.predict(img, isTrack)
+        img = cv2.polylines(img, [polygon], True, (0,255,0), 3)
         
         current_count = 0
         for result in results:
@@ -54,9 +52,5 @@ class YoloDetect():
                 
                 cv2.rectangle(img, (xA,yA), (xB,yB), color, 3)
             
-        # give warning message and update counter
-        self.warn(current_count)
-        self.count = current_count
-            
-        return img
+        return img, current_count
             

@@ -1,6 +1,5 @@
-from flask import Flask, render_template, request, jsonify
-import base64
-import os
+from flask import Flask, render_template, request, jsonify, Response
+import os, io
 import numpy as np
 import cv2
 from services.detectors.detect import YoloDetect
@@ -8,8 +7,14 @@ import datetime
 import json
 
 # global var
-polygon_coords = []
-with open("config.json", "r") as f:
+video_stream = cv2.VideoCapture(0)
+intruder_count = 0
+polygon_coords = np.array([[210,350], [1010,490], [900,1080], [0,1080], [0,520]], np.int32).reshape(-1, 1, 2)
+first_frame = None
+default_first_frame = cv2.imread("./static/images/default_first_frame.png")
+
+
+with open("./assets/configs/config.json", "r") as f:
     config = json.load(f)
 detector = YoloDetect(model_path=config['model_path'], conf_thresh=config['conf_thresh'])
 
@@ -19,7 +24,7 @@ app = Flask(__name__)
 # Add app routes
 @app.route('/')
 def application():
-    return render_template('index.html')
+    return render_template('test.html')
 
 @app.route('/_send_polygon', methods=['POST'])
 def receive_polygon():
@@ -32,35 +37,45 @@ def receive_polygon():
         response = {'error': str(e)}
     
     return jsonify(response)
+    
+def img_tobyte(img, type= ".jpg"):
+    _, buffer = cv2.imencode(type, img)
+    img_bytes = buffer.tobytes()
+    return img_bytes
 
-@app.route('/_photo_cap', methods=['POST'])
-def photo_cap():
-    response = "Unknown error"
-    data = ""
-    try:
-        photo_base64 = request.form.get('photo_cap')
-        header, encoded = photo_base64.split(",", 1)
-        binary_data = base64.b64decode(encoded)
-        
-        # Convert binary data to numpy array for processing with OpenCV
-        nparr = np.frombuffer(binary_data, np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+def generate():
+    global video_stream, intruder_count, first_frame
+    while True:
+        success, frame = video_stream.read()  # read the camera frame
+        if not success:
+            print("Stream has been ended!")
+            break
+        else:
+            if first_frame is None:
+                first_frame = img_tobyte(frame)
 
-        global polygon_coords
+            result_frame, intruder_count = detector.detect(frame, polygon_coords, "YOLO")
+            frame = img_tobyte(result_frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    
+def first_take():
+    global first_frame, default_first_frame
+    while True:
+        if first_frame is not None:
+            result = (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + first_frame + b'\r\n')
+        else:
+            default_first_frame_byte = img_tobyte(default_first_frame)
+            result = (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + default_first_frame_byte + b'\r\n')
+        yield result
+    
+@app.route("/first_image")
+def first_image():
+    return Response(first_take(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-        if rgb_image and polygon_coords:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            image_name = f"photo_{timestamp}.jpeg"
-            image_path = os.path.join("static", image_name)
-            os.makedirs(os.path.dirname(image_path), exist_ok=True)
-
-            result = detector.detect(rgb_image, polygon_coords)
-
-    except Exception as e:
-        response = str(e)
-
-    return jsonify({'message': data})
+@app.route("/video_feed")
+def video_feed():
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host= "0.0.0.0")

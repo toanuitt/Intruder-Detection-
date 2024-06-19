@@ -46,8 +46,16 @@ To get started with the project, follow these steps:
 To run the application, execute the following command in your terminal:
 ```bash
 $ python app.py
+```
 
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
 ## License
+This project is licensed under the MIT License.
+
+## Acknowledgements
+- YOLO by Ultralytics for the object detection model.
+- Flask for the web framework.
+- OpenCV for computer vision functionalities.
+- All other open-source libraries and contributors.

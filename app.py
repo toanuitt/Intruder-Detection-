@@ -11,7 +11,6 @@ video_stream = None
 intruder_count = 0
 polygon_coords = None
 first_frame = False
-default_first_frame = cv2.imread("./static/images/default_first_frame.png")
 choice = "YOLO"
 
 

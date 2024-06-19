@@ -11,3 +11,4 @@ dependencies:
     - pillow
     - ultralytics
     - deep_sort_realtime
+    - shapely

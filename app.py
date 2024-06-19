@@ -2,21 +2,22 @@ from flask import Flask, render_template, request, jsonify, Response
 import os, io
 import numpy as np
 import cv2
-from services.detectors.detect import YoloDetect
+from services.detectors.detect import IntruderDetector
 import datetime
 import json
 
 # global var
 video_stream = None
 intruder_count = 0
-polygon_coords = np.array([[210,350], [1010,490], [900,1080], [0,1080], [0,520]], np.int32).reshape(-1, 1, 2)
-first_frame = None
+polygon_coords = None #np.array([[210,350], [1010,490], [900,1080], [0,1080], [0,520]], np.int32)
+first_frame = False
 default_first_frame = cv2.imread("./static/images/default_first_frame.png")
+choice = "YOLO"
 
 
 with open("./assets/configs/config.json", "r") as f:
     config = json.load(f)
-detector = YoloDetect(model_path=config['model_path'], conf_thresh=config['conf_thresh'])
+detector = IntruderDetector(config['model_paths'], conf_thresh=config['conf_thresh'])
 
 # Create flask app
 app = Flask(__name__)
@@ -39,7 +40,7 @@ def send_value():
             video_stream.release()
 
         data = request.get_json()
-        ip_value = data.get('value')
+        ip_value = data.get('camera_ip')
         input = parseInput(ip_value)
         video_stream = cv2.VideoCapture(input)
         ret, _ = video_stream.read()
@@ -52,12 +53,30 @@ def send_value():
     
     return jsonify(response)
 
+@app.route('/_submit_model_choice', methods=['POST'])
+def submit_choice():
+    global choice
+    try:
+        data = request.json
+        print(choice)
+        choice = data.get('choice')
+        print(choice)
+        res = {'status': 'success', 'choice': choice}
+    except Exception as e:
+        res = {"status": "failed", "error": str(e)}
+    return jsonify(res)
+
+def parse_json_poly(jsonPoly):
+    polygon = [[point["x"], point["y"]] for point in jsonPoly]
+    return polygon
+
 @app.route('/_send_polygon', methods=['POST'])
 def receive_polygon():
     global polygon_coords
     try:
         data = request.get_json()
-        polygon_coords = data['points']
+        polygon_coords = parse_json_poly(data.get("polygon"))
+        
         response = {'message': 'Polygon coordinates received successfully'}
     except Exception as e:
         response = {'error': str(e)}
@@ -75,29 +94,18 @@ def generate():
         success, frame = video_stream.read()  # read the camera frame
         if not success:
             print("Stream has been ended!")
+            video_stream.release()
+            first_frame = False
             break
         else:
-            if first_frame is None:
-                first_frame = img_tobyte(frame)
+            result_frame = img_tobyte(frame)
+            
+            if polygon_coords is not None and len(polygon_coords)>2:
+                result_frame, intruder_count = detector.detect(frame, polygon_coords, "YOLO")
+                result_frame = img_tobyte(result_frame)
 
-            result_frame, intruder_count = detector.detect(frame, polygon_coords, "YOLO")
-            frame = img_tobyte(result_frame)
             yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    
-def first_take():
-    global first_frame, default_first_frame
-    while True:
-        if first_frame is not None:
-            result = (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + first_frame + b'\r\n')
-        else:
-            default_first_frame_byte = img_tobyte(default_first_frame)
-            result = (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + default_first_frame_byte + b'\r\n')
-        yield result
-    
-@app.route("/first_image")
-def first_image():
-    return Response(first_take(), mimetype='multipart/x-mixed-replace; boundary=frame')
+                b'Content-Type: image/jpeg\r\n\r\n' + result_frame + b'\r\n')
 
 @app.route("/video_feed")
 def video_feed():

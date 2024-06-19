@@ -9,9 +9,8 @@ import json
 # global var
 video_stream = None
 intruder_count = 0
-polygon_coords = None #np.array([[210,350], [1010,490], [900,1080], [0,1080], [0,520]], np.int32)
+polygon_coords = None
 first_frame = False
-default_first_frame = cv2.imread("./static/images/default_first_frame.png")
 choice = "YOLO"
 
 
@@ -26,6 +25,10 @@ app = Flask(__name__)
 @app.route('/')
 def application():
     return render_template('index.html')
+
+@app.get("/_get_intruder_count")
+def get_intruder_count():
+    return jsonify({"intruder_count": intruder_count})
 
 def parseInput(input): 
     if len(input) == 1:
@@ -82,6 +85,20 @@ def receive_polygon():
         response = {'error': str(e)}
     
     return jsonify(response)
+
+@app.route("/_reset_polygon", methods=['POST'])
+def reset_polygon():
+    global polygon_coords
+    try:
+        data = request.get_json()
+        if data.get("reset"):
+            polygon_coords = []
+        
+        res = {"message": "Reset successfully"}
+    except Exception as e:
+        res = {"error": str(e)}
+    
+    return jsonify(res)
     
 def img_tobyte(img, type= ".jpg"):
     _, buffer = cv2.imencode(type, img)

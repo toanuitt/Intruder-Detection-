@@ -1,4 +1,5 @@
 let resultImage = document.getElementById("resultImage");
+const intruderCounter = document.getElementById("intruderCounter")
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
 let imageLoaded = false;
@@ -8,8 +9,25 @@ let points = [];
 
 
 
-window.onload = function() {
-};
+function updateIntruderCounter(){
+    var networkPromise = fetch('_get_intruder_count')
+        .then(response => response.json())
+        .then(data => {
+            intruderCounter.textContent = data["intruder_count"].toString()
+        });;
+
+    var timeOutPromise = new Promise(function(resolve, reject) {
+        setTimeout(resolve, 1000, 'Timeout Done');
+    });
+
+    Promise.all(
+    [networkPromise, timeOutPromise]).then(function(values) {
+        console.log("Atleast 2 secs + TTL (Network/server)");
+        updateIntruderCounter();
+    });
+}
+
+updateIntruderCounter();
 
 function adjustCanvasSize() {
     canvas.width = resultImage.width;
@@ -39,7 +57,6 @@ document.getElementById("sendPolygon").addEventListener("click", function() {
             }
         });
     }
-
 });
 
 function resetPolygon() {
@@ -48,7 +65,19 @@ function resetPolygon() {
 }
 
 document.getElementById("resetPolygon").addEventListener("click", function() {
-    resetPolygon();
+    resetPolygon()
+    $.ajax({
+        type: 'POST',
+        url: '/_reset_polygon',
+        data: JSON.stringify({ reset: true }),
+        contentType: 'application/json',
+        success: function(response) {
+            console.log(response);
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
 });
 
 canvas.addEventListener('mousedown', (e) => {

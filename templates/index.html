@@ -37,14 +37,12 @@
             <img id="resultImage" src="">
             <canvas id="canvas"></canvas>
         </div>
-        <h1>Photo Processing Results</h1>              
+        <h1 class="Result">Intruder count: <span id="intruderCounter">0</span></h1>              
         <div id="resultContainer">
             <!-- Results will be dynamically added here -->
         </div>
        
-     
     </div>
-    <div class='footer'></div>
      
     <script type="module" src="{{ url_for('static',filename='src/main.js') }}"></script>
 </body>

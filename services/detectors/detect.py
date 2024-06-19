@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from services.trackers.deep_sort import DeepSortWrapper
+from shapely.geometry import Polygon
 
 class IntruderDetector():
     def __init__(self, model_paths, conf_thresh=0.5, iou_tracking=0.5):
@@ -42,7 +43,6 @@ class IntruderDetector():
             person_predicts = self.models["yolov5mu"].predict(img, classes=self.classes, conf=self.conf_threshold, verbose= verbose)
             person_bboxes = self.transform_yolo_prediction(person_predicts)
             tracks = self.tracker.update_tracker(person_bboxes, img)
-            print(len(person_bboxes), len(tracks))
             results = []
             for track in tracks:
                 if not track.is_confirmed() or track.time_since_update > 1:
@@ -51,27 +51,29 @@ class IntruderDetector():
             
         return results
                 
-    def isInside(self, contour, corr):
-        return cv2.pointPolygonTest(contour, corr, False) == 1
+    def isInside(self, poly1, poly2):
+        poly1 = Polygon(poly1)
+        poly2 = Polygon(poly2)
+        return poly1.intersects(poly2)
 
     def detect(self, img, polygon, tracker):
-        polygon = np.array(polygon).reshape(-1, 1, 2)
         bboxes = self.predict(img, tracker)
-        img = cv2.polylines(img, [polygon], True, (0,255,0), 3)
+        img = cv2.polylines(img, [np.array(polygon).reshape(-1, 1, 2)], True, (0,255,0), 3)
         
         current_count = 0
         for bbox, label in bboxes:
             xA, yA, w, h = bbox
-
-            corr = (int(w/2), yA+h)
+            xB = xA + w
+            yB = yA + h
+            bbox_points = [[xA, yA], [xA, yB], [xB, yA], [xB, yB]]
             
-            if self.isInside(polygon, corr):
+            if self.isInside(polygon, bbox_points):
                 color = (0,0,255)
                 current_count += 1
             else:
                 color = (255,0,0) 
             
-            cv2.rectangle(img, (xA,yA), (xA + w, yA + h), color, 3)
+            cv2.rectangle(img, (xA, yA), (xB, yB), color, 3)
             
         return img, current_count
             

@@ -44,32 +44,6 @@ html, body {
   text-align: center;
 }
 
-.upload_part {
-  background-color: rgba(0, 0, 0, 0.3);
-  text-align: center;
-  padding: 40px;
-}
-
-.upload_button {
-  background-color: #FEED06;
-  color: black;
-  padding: 15px;
-  font-size: 16px;
-  border: 0px;
-  border-radius: 5px;
-  -webkit-box-shadow: 6px 8px 18px -5px rgba(0, 0, 0, 0.38);
-  -moz-box-shadow: 6px 8px 18px -5px rgba(0, 0, 0, 0.38);
-  box-shadow: 6px 8px 18px -5px rgba(0, 0, 0, 0.38);
-  cursor: pointer;
-  margin: 10px;
-}
-
-.upload_hint {
-  margin: 10px;
-  font-size: 14px;
-  color: rgb(200, 200, 200);
-}
-
 .result_part {
   text-align: center;
   padding: 40px;
@@ -98,24 +72,11 @@ html, body {
   border-radius: 5px;
 }
 
-#camera {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
 #canvas {
   position: absolute;
   top: 0;
   left: 0;
   border: 2px solid red;
-}
-
-#videoElement {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  display: block;
 }
 
 #container {

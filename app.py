@@ -27,6 +27,10 @@ app = Flask(__name__)
 def application():
     return render_template('index.html')
 
+@app.get("/_get_intruder_count")
+def get_intruder_count():
+    return jsonify({"intruder_count": intruder_count})
+
 def parseInput(input): 
     if len(input) == 1:
         return int(input)

@@ -22,12 +22,39 @@ function updateIntruderCounter(){
 
     Promise.all(
     [networkPromise, timeOutPromise]).then(function(values) {
-        console.log("Atleast 2 secs + TTL (Network/server)");
         updateIntruderCounter();
     });
 }
 
+function updateIntruderList() {
+    var networkPromise = fetch('_get_intruder_list')
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            let intruderList = data["intruder_list"]
+            let list = document.getElementById("intruderList");
+            while( list.firstChild ){
+                list.removeChild( list.firstChild );
+            }
+            for (let i = 0; i < intruderList.length; ++i) {
+                let li = document.createElement('li');
+                li.innerText = intruderList[i];
+                list.appendChild(li);
+            }
+        });;
+
+    var timeOutPromise = new Promise(function(resolve, reject) {
+        setTimeout(resolve, 1000, 'Timeout Done');
+    });
+
+    Promise.all(
+    [networkPromise, timeOutPromise]).then(function(values) {
+        updateIntruderList();
+    });
+}
+
 updateIntruderCounter();
+updateIntruderList()
 
 function adjustCanvasSize() {
     canvas.width = resultImage.width;
@@ -183,3 +210,5 @@ document.getElementById('modelForm').addEventListener('change', function(event) 
         });
     }
 });
+
+

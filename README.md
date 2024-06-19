@@ -55,7 +55,8 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 This project is licensed under the MIT License.
 
 ## Acknowledgements
-- YOLO by Ultralytics for the object detection model.
-- Flask for the web framework.
-- OpenCV for computer vision functionalities.
+- [YOLOv5](https://github.com/ultralytics/yolov5) and [YOLOv8](https://github.com/ultralytics/ultralytics) by Ultralytics for the object detection model.
+- [Flask](https://flask.palletsprojects.com/) for the web framework.
+- [OpenCV](https://opencv.org/) for computer vision functionalities.
+- [Deep SORT](https://github.com/nwojke/deep_sort) for the multi-object tracking algorithm.
 - All other open-source libraries and contributors.

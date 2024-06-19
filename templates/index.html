@@ -12,19 +12,21 @@
         Intruder Detection
     </div>
     <div class='content'>
+        <div class="textbox-container">
+            <label for="userInput">Input:</label>
+            <input type="text" id="userInput" name="userInput" placeholder="Enter text here">
+        </div>  
+        <div class="Notfound">
+        </div>
         <div id="container">
-            <video autoplay="true" id="videoElement"></video>
-            <img src="{{ url_for('video_feed') }}">
+            <!-- <img id="firstImage" src="{{ url_for('first_image') }}"> -->
+            <img id="resultImage" src="">
             <canvas id="canvas"></canvas>
         </div>
         <div class="button-container">
             <button class="toggle-button" id="startSendingFrames">Start Sending Frames</button>
             <button class="toggle-button" id="resetPolygon">Reset Polygon</button>
         </div>
-        <div class="textbox-container">
-            <label for="userInput">Input:</label>
-            <input type="text" id="userInput" name="userInput" placeholder="Enter text here">
-        </div>  
         <h1>Photo Processing Results</h1>              
         <div id="resultContainer">
             <!-- Results will be dynamically added here -->

@@ -7,7 +7,7 @@ import datetime
 import json
 
 # global var
-video_stream = cv2.VideoCapture(0)
+video_stream = None
 intruder_count = 0
 polygon_coords = np.array([[210,350], [1010,490], [900,1080], [0,1080], [0,520]], np.int32).reshape(-1, 1, 2)
 first_frame = None
@@ -24,7 +24,33 @@ app = Flask(__name__)
 # Add app routes
 @app.route('/')
 def application():
-    return render_template('test.html')
+    return render_template('index.html')
+
+def parseInput(input): 
+    if len(input) == 1:
+        return int(input)
+    return input
+
+@app.route('/_send_camera_ip', methods=['POST'])
+def send_value():
+    global video_stream
+    try:
+        if video_stream is not None:
+            video_stream.release()
+
+        data = request.get_json()
+        ip_value = data.get('value')
+        input = parseInput(ip_value)
+        video_stream = cv2.VideoCapture(input)
+        ret, _ = video_stream.read()
+        if ret:
+            response = {'action': 'access_camera_success'}
+        else:
+            response = {'action': 'not_found'}
+    except Exception as e:
+        response = {'error': str(e)}
+    
+    return jsonify(response)
 
 @app.route('/_send_polygon', methods=['POST'])
 def receive_polygon():
@@ -45,7 +71,7 @@ def img_tobyte(img, type= ".jpg"):
 
 def generate():
     global video_stream, intruder_count, first_frame
-    while True:
+    while video_stream:
         success, frame = video_stream.read()  # read the camera frame
         if not success:
             print("Stream has been ended!")

@@ -1,4 +1,4 @@
-let video = document.querySelector("#videoElement");
+let resultImage = document.getElementById("resultImage");
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
 let isCameraOn = false;
@@ -54,12 +54,12 @@ function sendFrame() {
 
 // Initialize camera and canvas size
 window.onload = function() {
-    startCamera();
+    // startCamera();
 };
 
-video.addEventListener('loadedmetadata', () => {
+resultImage.addEventListener('loadedmetadata', () => {
     adjustCanvasSize();
-});
+})
 
 document.getElementById("startSendingFrames").addEventListener("click", function() {
     if (!isSendingFrames) {
@@ -77,10 +77,10 @@ document.getElementById("resetPolygon").addEventListener("click", function() {
 });
 
 function adjustCanvasSize() {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.style.width = video.clientWidth + 'px';
-    canvas.style.height = video.clientHeight + 'px';
+    canvas.width = resultImage.videoWidth;
+    canvas.height = resultImage.videoHeight;
+    canvas.style.width = resultImage.clientWidth + 'px';
+    canvas.style.height = resultImage.clientHeight + 'px';
 }
 
 let isDrawing = false;
@@ -155,10 +155,39 @@ function sendPolygonPoints() {
     });
 }
 
+function getImage() {
+    resultImage.setAttribute('src', "video_feed")
+}
+
+function clearImage() {
+    resultImage.setAttribute("src", "")
+}
+
 $(document).ready(function() {
     $('#userInput').keypress(function(event) {
         if (event.key === 'Enter') {
-            $(this).val(0);
+            let inputValue = $(this).val();
+            $.ajax({
+                type: 'POST',
+                url: '/_send_camera_ip',
+                data: JSON.stringify({ value: inputValue }),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log(response.action)
+                    if (response.action === 'not_found') {
+                        $('.Notfound').html('Not found');
+                        clearImage()
+                    } else if (response.action === 'access_camera_success') {
+                        $('.Notfound').html('');
+                        getImage()
+                    } else if (response.action === 'turn_camera_off') {
+                        stopCamera();
+                    }
+                },
+                error: function(error) {
+                    console.error('Error sending value:', error);
+                }
+            });
         }
     });
 });

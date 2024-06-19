@@ -1,0 +1,7 @@
+{
+    "model_paths": {
+        "yolov8n": "./assets/models/yolov8n.pt",
+        "yolov5mu": "./assets/models/yolov5mu.pt"
+    },
+    "conf_thresh": 0.5
+}

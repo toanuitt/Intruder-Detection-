@@ -1,124 +1,70 @@
-let video = document.querySelector("#videoElement");
+let resultImage = document.getElementById("resultImage");
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
-let isCameraOn = false;
-let isSendingFrames = false;
+let imageLoaded = false;
 let intervalId = null;
+let isDrawing = false;
+let points = [];
 
-// Access the camera
-function startCamera() {
-    if (navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                video.srcObject = stream;
-                isCameraOn = true;
-            })
-            .catch(function(error) {
-                console.log("Something went wrong");
-            });
-    } else {
-        console.log("Media not supported");
-    }
-}
 
-// Stop sending frames to backend
-function stopSendingFrames() {
-    isSendingFrames = false;
-    clearInterval(intervalId);
-}
 
-// Send frame to backend
-function sendFrame() {
-    if (!isSendingFrames) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    let dataURL = canvas.toDataURL('image/jpeg');
-    $.ajax({
-        type: "POST",
-        url: "/_photo_cap",
-        data: { photo_cap: dataURL },
-        success: function(response) {
-            console.log(response.response);
-            $('#resultContainer').html(response.message);
-        },
-        error: function(error) {
-            console.log(error);
-        },
-        complete: function() {
-            intervalId = setTimeout(sendFrame, 100); // Send the next frame after a short delay
-        }
-    });
-}
-
-// Initialize camera and canvas size
 window.onload = function() {
-    startCamera();
 };
 
-video.addEventListener('loadedmetadata', () => {
+function adjustCanvasSize() {
+    canvas.width = resultImage.width;
+    canvas.height = resultImage.height;
+    canvas.style.width = resultImage.clientWidth + 'px';
+    canvas.style.height = resultImage.clientHeight + 'px';
+}
+
+resultImage.addEventListener('load', () => {
+    imageLoaded = true
     adjustCanvasSize();
+})
+
+document.getElementById("sendPolygon").addEventListener("click", function() {
+    if (points.length > 2) {
+        context.clearRect(0, 0, canvas.width, canvas.height)
+        $.ajax({
+            type: 'POST',
+            url: '/_send_polygon',
+            data: JSON.stringify({ polygon: points }),
+            contentType: 'application/json',
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
+
 });
 
-document.getElementById("startSendingFrames").addEventListener("click", function() {
-    if (!isSendingFrames) {
-        isSendingFrames = true;
-        sendFrame();
-        document.getElementById("startSendingFrames").textContent = "Stop Sending Frames";
-    } else {
-        stopSendingFrames();
-        document.getElementById("startSendingFrames").textContent = "Start Sending Frames";
-    }
-});
+function resetPolygon() {
+    points = [];
+    context.clearRect(0, 0, canvas.width, canvas.height);
+}
 
 document.getElementById("resetPolygon").addEventListener("click", function() {
     resetPolygon();
 });
 
-function adjustCanvasSize() {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.style.width = video.clientWidth + 'px';
-    canvas.style.height = video.clientHeight + 'px';
-}
-
-let isDrawing = false;
-let points = [];
-
 canvas.addEventListener('mousedown', (e) => {
-    isDrawing = true;
-    const x = e.offsetX;
-    const y = e.offsetY;
-    if (points.length === 0) {
-        points.push({ x, y }); // Add the first point
-    }
-    points.push({ x, y }); // Start new line from this point
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    if (isDrawing) {
+    if(imageLoaded) {
+        isDrawing = true;
         const x = e.offsetX;
         const y = e.offsetY;
-        points[points.length - 1] = { x, y }; // Update the last point
-        drawLines();
+        if(points.length === 0) {
+            points.push({ x, y });
+        }
+        points.push({ x, y });
     }
-});
-
-canvas.addEventListener('mouseup', () => {
-    if (isDrawing) {
-        isDrawing = false;
-        sendPolygonPoints(); // Send points to the backend when drawing is complete
-    }
-});
-
-canvas.addEventListener('mouseout', () => {
-    isDrawing = false;
 });
 
 function drawLines() {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(video, 0, 0, canvas.width, canvas.height); // Redraw the video frame
 
     if (points.length < 2) return;
 
@@ -134,31 +80,77 @@ function drawLines() {
     context.stroke();
 }
 
-function resetPolygon() {
-    points = [];
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(video, 0, 0, canvas.width, canvas.height); // Redraw the video frame
+canvas.addEventListener('mousemove', (e) => {
+    if (isDrawing) {
+        const x = e.offsetX;
+        const y = e.offsetY;
+        points[points.length - 1] = { x, y }; // Update the last point
+        drawLines();
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    if (isDrawing) {
+        isDrawing = false;
+    }
+});
+
+canvas.addEventListener('mouseout', () => {
+    isDrawing = false;
+});
+
+function getImage() {
+    resultImage.setAttribute('src', "video_feed")
 }
 
-function sendPolygonPoints() {
-    $.ajax({
-        type: "POST",
-        url: "/_send_polygon",
-        contentType: "application/json",
-        data: JSON.stringify({ points: points }),
-        success: function(response) {
-            console.log(response);
-        },
-        error: function(error) {
-            console.log(error);
-        }
-    });
+function clearImage() {
+    resultImage.setAttribute("src", "")
 }
 
 $(document).ready(function() {
     $('#userInput').keypress(function(event) {
         if (event.key === 'Enter') {
-            $(this).val(0);
+            resetPolygon()
+            let inputValue = $(this).val();
+            $.ajax({
+                type: 'POST',
+                url: '/_send_camera_ip',
+                data: JSON.stringify({ camera_ip: inputValue }),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log(response.action)
+                    if (response.action === 'not_found') {
+                        $('.Notification').html('Not found');
+                        clearImage()
+                    } else if (response.action === 'access_camera_success') {
+                        $('.Notification').html('');
+                        getImage()
+                    }
+                },
+                error: function(error) {
+                    console.error('Error sending value:', error);
+                }
+            });
         }
     });
+});
+
+document.getElementById('modelForm').addEventListener('change', function(event) {
+    if (event.target.name === 'choice') {
+        const selectedValue = event.target.value;
+        fetch('/_submit_model_choice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ choice: selectedValue })
+        })
+        .then(response => {
+            data = response.json()
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
 });

@@ -12,18 +12,31 @@
         Intruder Detection
     </div>
     <div class='content'>
-        <div id="container">
-            <video autoplay="true" id="videoElement"></video>
-            <canvas id="canvas"></canvas>
-        </div>
-        <div class="button-container">
-            <button class="toggle-button" id="startSendingFrames">Start Sending Frames</button>
-            <button class="toggle-button" id="resetPolygon">Reset Polygon</button>
-        </div>
         <div class="textbox-container">
             <label for="userInput">Input:</label>
             <input type="text" id="userInput" name="userInput" placeholder="Enter text here">
         </div>  
+        <form id="modelForm">
+            <label>
+                <input type="radio" name="choice" value="DEEPSORT">
+                Yolov5 + DeepSort
+            </label>
+            <br>
+            <label>
+                <input type="radio" name="choice" value="YOLO" checked>
+                Yolov8 detector + Yolov8 tracker
+            </label>
+        </form>
+        <div class="button-container">
+            <button class="toggle-button" id="sendPolygon">Send Polygon</button>
+            <button class="toggle-button" id="resetPolygon">Reset Polygon</button>
+        </div>
+        <div class="Notification">
+        </div>
+        <div id="container">
+            <img id="resultImage" src="">
+            <canvas id="canvas"></canvas>
+        </div>
         <h1>Photo Processing Results</h1>              
         <div id="resultContainer">
             <!-- Results will be dynamically added here -->

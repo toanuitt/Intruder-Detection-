@@ -1,6 +1,6 @@
-# YOLO-Flask
+# Intruder Detection
 
-Running YOLO through a web browser using the Flask microframework.
+Running YOLOv5 and Deep SORT to detect and track intruders through a web browser interface using the Flask microframework.
 
 ## Table of Contents
 - [Requirements](#requirements)

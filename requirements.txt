@@ -1,6 +1,6 @@
 flask
-pybase64
-numpy
 opencv-python
+pybase64
+pillow
 ultralytics
-PIL
+deep_sort_realtime

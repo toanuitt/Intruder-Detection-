@@ -101,7 +101,7 @@ def generate():
             result_frame = img_tobyte(frame)
             
             if polygon_coords is not None and len(polygon_coords)>2:
-                result_frame, intruder_count = detector.detect(frame, polygon_coords, "YOLO")
+                result_frame, intruder_count = detector.detect(frame, polygon_coords, choice)
                 result_frame = img_tobyte(result_frame)
 
             yield (b'--frame\r\n'

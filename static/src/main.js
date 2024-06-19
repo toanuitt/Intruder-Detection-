@@ -25,6 +25,7 @@ resultImage.addEventListener('load', () => {
 
 document.getElementById("sendPolygon").addEventListener("click", function() {
     if (points.length > 2) {
+        context.clearRect(0, 0, canvas.width, canvas.height)
         $.ajax({
             type: 'POST',
             url: '/_send_polygon',

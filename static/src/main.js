@@ -39,7 +39,6 @@ document.getElementById("sendPolygon").addEventListener("click", function() {
             }
         });
     }
-
 });
 
 function resetPolygon() {
@@ -48,7 +47,19 @@ function resetPolygon() {
 }
 
 document.getElementById("resetPolygon").addEventListener("click", function() {
-    resetPolygon();
+    resetPolygon()
+    $.ajax({
+        type: 'POST',
+        url: '/_reset_polygon',
+        data: JSON.stringify({ reset: true }),
+        contentType: 'application/json',
+        success: function(response) {
+            console.log(response);
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
 });
 
 canvas.addEventListener('mousedown', (e) => {

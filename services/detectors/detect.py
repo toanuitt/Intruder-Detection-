@@ -42,7 +42,6 @@ class IntruderDetector():
             person_predicts = self.models["yolov5mu"].predict(img, classes=self.classes, conf=self.conf_threshold, verbose= verbose)
             person_bboxes = self.transform_yolo_prediction(person_predicts)
             tracks = self.tracker.update_tracker(person_bboxes, img)
-            print(len(person_bboxes), len(tracks))
             results = []
             for track in tracks:
                 if not track.is_confirmed() or track.time_since_update > 1:
